@@ -22,11 +22,6 @@ void queen_free(queen *q)
 
 }
 
-static size_t queen_top(queen *q)
-{
-    return q->data[q->front];
-}
-
 static size_t queen_pop(queen *q)
 {
     size_t ret = q->data[q->front];
@@ -78,7 +73,7 @@ void pb_free(ParallelBuffer *pb)
 void *pb_pop(ParallelBuffer *pb, size_t *size)
 {
     sem_wait(&pb->count);
-    *size = queen_top(&pb->element_size);
+    *size = queen_pop(&pb->element_size);
 
     return pb->data + pb->front;
 
@@ -93,19 +88,20 @@ void pb_take(ParallelBuffer *pb)
     sem_post(&pb->capacity);
 }
 
-void *pb_push(ParallelBuffer *pb, size_t size)
+void *pb_push(ParallelBuffer *pb)
 {
-    assert(size <= pb->per_size);
 
     sem_wait(&pb->capacity);
-    queen_push(&pb->element_size, size);
 
     return pb->data + pb->rear;
 
 }
 
-void pb_append(ParallelBuffer *pb)
+void pb_append(ParallelBuffer *pb, size_t size)
 {
+    assert(size <= pb->per_size);
+
+    queen_push(&pb->element_size, size);
     pb->rear += pb->per_size;
     if (pb->rear >= pb->maxbytes){
         pb->rear = 0;
