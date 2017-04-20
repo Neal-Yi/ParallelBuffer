@@ -33,8 +33,8 @@ void *pb_pop(ParallelBuffer *pb, size_t *size);
 
 void pb_take(ParallelBuffer *pb);
 
-void *pb_push(ParallelBuffer *pb, size_t size);
+void *pb_push(ParallelBuffer *pb);
 
-void pb_append(ParallelBuffer *pb);
+void pb_append(ParallelBuffer *pb, size_t size);
 
 #endif
