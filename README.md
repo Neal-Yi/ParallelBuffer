@@ -99,3 +99,33 @@ void main()
   parbegin(producer, consumer);
 }
 ~~~
+## 用法 ##
+
+main:
+~~~c
+  const elementsofbuffer = /*缓冲区中元素个数(>=1)*/
+  ParallelBuffer pb;
+  pb_init(&pb, sizeof(element), elementsofbuffer);
+
+  ...
+  pb_free(&pb); /*结束时释放缓存空间*/
+~~~
+producer:
+~~~c
+  void *buf;
+  while(some condition){
+    buf = pb_push(&pb,elementsize);
+    produce(buf);/*生成到buf中*/
+    pb_append(&pb);
+  }
+~~~
+consumer:
+~~~c
+  void *buf;
+  size_t elementsize;
+  while(some condition){
+    buf = pb_pop(&pb, &elementsize);/*从缓冲区中取出一份数据，长度保留在elementsize中*/
+    consume(buf, elementsize);/*处理取出的数据*/
+    pb_append(&pb);
+  }
+~~~
