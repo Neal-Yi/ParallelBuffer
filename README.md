@@ -127,6 +127,6 @@ consumer:
   while(some condition){
     buf = pb_pop(&pb, &elementsize);/*从缓冲区中取出一份数据，长度保留在elementsize中*/
     consume(buf, elementsize);/*处理取出的数据*/
-    pb_append(&pb);
+    pb_take(&pb);
   }
 ~~~
