@@ -2,7 +2,7 @@
 #define _PARALLELBUFFER_H_
 #include <semaphore.h>
 
-/* use queen to store the of each element*/
+/* use queen to store the size of each element*/
 typedef struct queen{
     size_t front;
     size_t rear;
