@@ -113,10 +113,11 @@ main:
 producer:
 ~~~c
   void *buf;
+  size_t elementsize; /*produce生成数据的长度*/
   while(some condition){
-    buf = pb_push(&pb,elementsize);
-    produce(buf);/*生成到buf中*/
-    pb_append(&pb);
+    buf = pb_push(&pb);
+    elementsize = produce(buf);/*保存生成长度为elementsize的数据到buf中*/
+    pb_append(&pb, elementsize);
   }
 ~~~
 consumer:
