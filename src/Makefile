@@ -1,0 +1,27 @@
+SRCS=parallelbuffer.c 
+TEST=test.c
+PADDING=
+EXECUTABLE_TEST=parallelbuffer_test
+EXECUTABLE_PADDING=
+EXECUTABLES=$(EXECUTABLE_TEST) $(EXECUTABLE_PADDING)
+
+CC=gcc
+CFLAGS=-O3 -fopenmp -Wall -std=gnu99 
+LDFLAGS=-lpthread 
+
+OBJS=$(SRCS:.c=.o)
+OBJTEST=$(TEST:.c=.o)
+OBJPADDING=$(PADDING:.c=.o)
+
+all: $(EXECUTABLES) 
+
+$(EXECUTABLE_TEST):$(OBJS) $(OBJTEST) 
+	$(CC) $(CFLAGS) $(OBJTEST) $(OBJS) $(LDFLAGS) -o $@
+$(EXECUTABLE_PADDING):$(OBJPADDING) $(OBJS)
+	$(CC) $(CFLAGS) $(OBJPADDING) $(OBJS) $(CFLAGS) $(LDFLAGS) -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(EXECUTABLE_TEST) $(OBJS) $(OBJTEST) $(OBJPADDING)
