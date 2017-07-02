@@ -119,12 +119,14 @@ producer:
     elementsize = produce(buf);/*保存生成长度为elementsize的数据到buf中*/
     pb_append(&pb, elementsize);
   }
+  pb_producefin(&pb);
 ~~~
 consumer:
 ~~~c
   void *buf;
   size_t elementsize;
-  while(some condition){
+  /*producer 数据生成完成，且缓冲区数据都已处理时结束 */
+  while(!pb_processfin(&pb)){
     buf = pb_pop(&pb, &elementsize);/*从缓冲区中取出一份数据，长度保留在elementsize中*/
     consume(buf, elementsize);/*处理取出的数据*/
     pb_take(&pb);
