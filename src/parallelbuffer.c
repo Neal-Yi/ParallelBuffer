@@ -1,3 +1,20 @@
+/**
+ * parallelbuffer.c
+ * Copyright (c) 2017 orglanss <orglanss@gmail.com>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -42,20 +59,21 @@ static void queen_push(queen *q, size_t element)
         q->rear = 0;
 }
 
-void pb_init(ParallelBuffer *pb, size_t per_size, size_t maxelements)
+void pb_init(ParallelBuffer *pb, size_t elementsize, size_t maxelements)
 {
-   pb->maxelements = maxelements;
-   pb->per_size = per_size;
-   pb->maxbytes = maxelements * per_size;
+   pb->elementsize = elementsize;
+   pb->maxbytes = maxelements * elementsize;
    pb->data = NULL;
    if ((pb->data = (char *)malloc(pb->maxbytes)) == NULL){
        fprintf(stderr, "Parallel Buffer: Init malloc error\n");
    }
    pb->front = 0;
    pb->rear = 0;
+   pb->num_count = 0;
+   pb->pfin = 0;
    sem_init(&pb->count, 0, 0);
    sem_init(&pb->capacity, 0, maxelements);
-   queen_init(&pb->element_size, maxelements);
+   queen_init(&pb->elementsize_queen, maxelements);
 }
 
 void pb_free(ParallelBuffer *pb)
@@ -66,14 +84,14 @@ void pb_free(ParallelBuffer *pb)
     
     if (pb->data != NULL)
         free(pb->data);
-    queen_free(&pb->element_size);
+    queen_free(&pb->elementsize_queen);
 
 }
 
 void *pb_pop(ParallelBuffer *pb, size_t *size)
 {
     sem_wait(&pb->count);
-    *size = queen_pop(&pb->element_size);
+    *size = queen_pop(&pb->elementsize_queen);
 
     return pb->data + pb->front;
 
@@ -81,31 +99,41 @@ void *pb_pop(ParallelBuffer *pb, size_t *size)
 
 void pb_take(ParallelBuffer *pb)
 {
-    pb->front += pb->per_size;
+    pb->front += pb->elementsize;
     if (pb->front >= pb->maxbytes){
         pb->front = 0;
     }
+    pb->num_count --;
     sem_post(&pb->capacity);
 }
 
 void *pb_push(ParallelBuffer *pb)
 {
 
+    void *ret = pb->data + pb->rear;
     sem_wait(&pb->capacity);
+    pb->rear += pb->elementsize;
+    if (pb->rear >= pb->maxbytes){
+        pb->rear = 0;
+    }
+    return ret;
 
-    return pb->data + pb->rear;
 
 }
 
 void pb_append(ParallelBuffer *pb, size_t size)
 {
-    assert(size <= pb->per_size);
-
-    queen_push(&pb->element_size, size);
-    pb->rear += pb->per_size;
-    if (pb->rear >= pb->maxbytes){
-        pb->rear = 0;
-    }
+    assert(size <= pb->elementsize);
+    queen_push(&pb->elementsize_queen, size);
+    pb->num_count ++;
     sem_post(&pb->count);
 
+}
+
+void pb_producefin(ParallelBuffer *pb){
+  pb->pfin = 1;
+}
+
+int pb_processfin(ParallelBuffer *const pb) {
+  return (pb->pfin && (pb->num_count == 0)); 
 }
